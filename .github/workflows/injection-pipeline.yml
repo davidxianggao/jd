@@ -1,0 +1,58 @@
+name: Build Docker Image from Subfolder (Dropdown)
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_id:
+        description: 'Select GCP Project ID'
+        required: true
+        type: choice
+        options:
+          - method-citadel-wp-data-dev
+          - citadel-461813
+        default: citadel-461813
+
+      subfolder:
+        description: 'Select subfolder where Dockerfile is located'
+        required: true
+        type: choice
+        options:
+          - ccure
+          - workday
+        default: ccure
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    env:
+      PROJECT_ID: ${{ github.event.inputs.project_id }}
+      IMAGE_NAME: gcr.io/$PROJECT_ID/${{ github.event.inputs.subfolder }}-injection-job
+      IMAGE_TAG: ${{ github.run_number }}
+      FULL_IMAGE: "$IMAGE_NAME:$IMAGE_TAG"
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+    - name: Set up gcloud CLI
+      uses: google-github-actions/setup-gcloud@v1
+
+    - name: Configure Docker for GCR
+      run: gcloud auth configure-docker
+
+    - name: Build and tag Docker image
+      run: |
+        echo "Building Docker image: $FULL_IMAGE"
+        docker build -t "$FULL_IMAGE" ${{ github.event.inputs.subfolder }}
+
+    - name: Push Docker image to GCR
+      run: |
+
+        echo "Pushing Docker image: $FULL_IMAGE"
+        docker push "$FULL_IMAGE"
