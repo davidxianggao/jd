@@ -29,7 +29,7 @@ Options:
 Examples:
   jd a.json b.json
   cat b.json | jd a.json
-  jd -o patch a.json b.json; jd patch a.json
+  jd -o=patch a.json b.json; jd patch a.json
   jd -set a.json b.json
 ```
 
